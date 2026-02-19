@@ -1,3 +1,5 @@
+const readline = require('readline')
+
 const fsx = require('./../../lib/helpers/fsx')
 const { logger } = require('./../../shared/logger')
 
@@ -6,11 +8,8 @@ const Sets = require('./../../lib/services/sets')
 const catchAndLog = require('../../lib/helpers/catchAndLog')
 const isIgnoringDotenvKeys = require('../../lib/helpers/isIgnoringDotenvKeys')
 
-function set (key, value) {
-  logger.debug(`key: ${key}`)
-  logger.debug(`value: ${value}`)
-
-  const options = this.opts()
+function _run (key, value, context) {
+  const options = context.opts()
   logger.debug(`options: ${JSON.stringify(options)}`)
 
   // encrypt
@@ -20,7 +19,7 @@ function set (key, value) {
   }
 
   try {
-    const envs = this.envs
+    const envs = context.envs
     const envKeysFilepath = options.envKeysFile
 
     const {
@@ -79,6 +78,25 @@ function set (key, value) {
   } catch (error) {
     catchAndLog(error)
     process.exit(1)
+  }
+}
+
+function set (key, value) {
+  logger.debug(`key: ${key}`)
+  logger.debug(`value: ${value}`)
+
+  if (value === undefined) {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stderr
+    })
+
+    rl.question(`Enter value for ${key}: `, (answer) => {
+      rl.close()
+      _run(key, answer, this)
+    })
+  } else {
+    _run(key, value, this)
   }
 }
 
